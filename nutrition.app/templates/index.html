@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nutrition & Training Planner</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="container">
+    <h1>Nutrition & Training Planner</h1>
+    <p>Motor de decisión para planificación nutricional y de entrenamiento</p>
+
+    <form method="POST" class="form-section">
+        <h3>Datos del Usuario</h3>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label>Peso (kg):</label>
+                <input type="number" name="weight" value="{{ request.form.weight or 70 }}" step="0.1" min="30" max="200" required>
+            </div>
+            <div class="form-group">
+                <label>Altura (cm):</label>
+                <input type="number" name="height" value="{{ request.form.height or 175 }}" step="0.1" min="100" max="250" required>
+            </div>
+            <div class="form-group">
+                <label>Edad:</label>
+                <input type="number" name="age" value="{{ request.form.age or 30 }}" min="15" max="100" required>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Sexo:</label>
+                <select name="sex" required>
+                    <option value="male" {% if request.form.sex == 'male' %}selected{% endif %}>Masculino</option>
+                    <option value="female" {% if request.form.sex == 'female' %}selected{% endif %}>Femenino</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Nivel de Actividad:</label>
+                <select name="activity_level" required>
+                    <option value="sedentary" {% if request.form.activity_level == 'sedentary' %}selected{% endif %}>Sedentario</option>
+                    <option value="light" {% if request.form.activity_level == 'light' %}selected{% endif %}>Ligero</option>
+                    <option value="moderate" {% if request.form.activity_level == 'moderate' %}selected{% endif %}>Moderado</option>
+                    <option value="high" {% if request.form.activity_level == 'high' %}selected{% endif %}>Alto</option>
+                    <option value="very_high" {% if request.form.activity_level == 'very_high' %}selected{% endif %}>Muy Alto</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Objetivo:</label>
+                <select name="goal" required>
+                    <option value="deficit" {% if request.form.goal == 'deficit' %}selected{% endif %}>Pérdida de Peso</option>
+                    <option value="maintenance" {% if request.form.goal == 'maintenance' %}selected{% endif %}>Mantenimiento</option>
+                    <option value="bulk" {% if request.form.goal == 'bulk' %}selected{% endif %}>Ganancia Muscular</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Calorías Actuales (opcional):</label>
+                <input type="number" name="current_calories" value="{{ request.form.current_calories or 0 }}" min="0" max="5000">
+            </div>
+            <div class="form-group">
+                <label>Calorías Entrenamiento (opcional):</label>
+                <input type="number" name="training_calories" value="{{ request.form.training_calories or 0 }}" min="0" max="1000">
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <button type="submit" name="action" value="analyze">
+                Analizar Plan Nutricional
+            </button>
+        </div>
+    </form>
+
+    {% if analysis %}
+    <div class="results">
+        <div class="result-card">
+            <h3>📋 Perfil del Usuario</h3>
+            <div class="metric">
+                <span class="metric-label">Peso:</span>
+                <span class="metric-value">{{ analysis.user_profile.weight }} kg</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Altura:</span>
+                <span class="metric-value">{{ analysis.user_profile.height }} cm</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Edad:</span>
+                <span class="metric-value">{{ analysis.user_profile.age }} años</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Sexo:</span>
+                <span class="metric-value">{{ 'Masculino' if analysis.user_profile.sex == 'male' else 'Femenino' }}</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Actividad:</span>
+                <span class="metric-value">{{ analysis.user_profile.activity_level.title() }}</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Objetivo:</span>
+                <span class="metric-value">{{ analysis.user_profile.goal.title() }}</span>
+            </div>
+        </div>
+
+        <div class="result-card">
+            <h3>🔥 Análisis Metabólico</h3>
+            <div class="metric">
+                <span class="metric-label">Tasa Metabólica Basal (BMR):</span>
+                <span class="metric-value">{{ "%.0f"|format(analysis.metabolic.bmr) }} kcal/día</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Gasto Energético Total (TDEE):</span>
+                <span class="metric-value">{{ "%.0f"|format(analysis.metabolic.tdee) }} kcal/día</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Factor de Actividad:</span>
+                <span class="metric-value">{{ "%.2f"|format(analysis.metabolic.activity_factor) }}</span>
+            </div>
+        </div>
+
+        <div class="result-card">
+            <h3>🥗 Análisis Nutricional</h3>
+            <div class="metric">
+                <span class="metric-label">Balance Energético:</span>
+                <span class="metric-value {{ 'status-' + analysis.nutritional.status }}">
+                    {{ "%+.0f"|format(analysis.nutritional.energy_balance) }} kcal
+                </span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Estado Metabólico:</span>
+                <span class="metric-value {{ 'status-' + analysis.nutritional.status }}">
+                    {{ analysis.nutritional.status.title() }}
+                </span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Calorías Objetivo:</span>
+                <span class="metric-value">{{ "%.0f"|format(analysis.nutritional.target_calories) }} kcal/día</span>
+            </div>
+            
+            <h4 style="margin-top: 20px; margin-bottom: 10px;">Distribución de Macronutrientes:</h4>
+            <div class="macros">
+                <div class="macro-item">
+                    <div>Proteína</div>
+                    <div class="macro-value">{{ "%.1f"|format(analysis.nutritional.macro_split.protein) }}g</div>
+                    <div>({{ "%.1f"|format(analysis.nutritional.macro_percentages.protein) }}%)</div>
+                </div>
+                <div class="macro-item">
+                    <div>Grasas</div>
+                    <div class="macro-value">{{ "%.1f"|format(analysis.nutritional.macro_split.fat) }}g</div>
+                    <div>({{ "%.1f"|format(analysis.nutritional.macro_percentages.fat) }}%)</div>
+                </div>
+                <div class="macro-item">
+                    <div>Carbohidratos</div>
+                    <div class="macro-value">{{ "%.1f"|format(analysis.nutritional.macro_split.carbs) }}g</div>
+                    <div>({{ "%.1f"|format(analysis.nutritional.macro_percentages.carbs) }}%)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="result-card">
+            <h3>💡 Recomendaciones Personalizadas</h3>
+            <div class="metric">
+                <span class="metric-label">Nivel de Confianza:</span>
+                <span class="metric-value">{{ "%.1f"|format(analysis.recommendation.confidence_level * 100) }}%</span>
+            </div>
+            
+            <div style="margin-top: 15px;">
+                <p>{{ analysis.recommendation.recommendation | replace('\n', '<br>') | safe }}</p>
+            </div>
+            
+            <div class="steps">
+                <h4>Pasos Accionables:</h4>
+                <ol>
+                    {% for step in analysis.recommendation.actionable_steps %}
+                    <li>{{ step }}</li>
+                    {% endfor %}
+                </ol>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if image %}
+    <div class="chart-section">
+        <h3>📊 Gráfico Generado</h3>
+        <img src="{{ image }}" alt="Nutrition Chart">
+    </div>
+    {% endif %}
+</div>
+
+</body>
+</html>

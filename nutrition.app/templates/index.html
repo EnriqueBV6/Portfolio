@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nutrition & Training Planner</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="container">
+    <h1>Nutrition & Training Planner</h1>
+    <p>Motor de decisión para planificación nutricional y de entrenamiento</p>
+
+    <form method="POST" class="form-section">
+        <h3>Datos del Usuario</h3>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label>Peso (kg):</label>
+                <input type="number" name="weight" value="{{ request.form.weight or 70 }}" step="0.1" min="30" max="200" required>
+            </div>
+            <div class="form-group">
+                <label>Altura (cm):</label>
+                <input type="number" name="height" value="{{ request.form.height or 175 }}" step="0.1" min="100" max="250" required>
+            </div>
+            <div class="form-group">
+                <label>Edad:</label>
+                <input type="number" name="age" value="{{ request.form.age or 30 }}" min="15" max="100" required>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Sexo:</label>
+                <select name="sex" required>
+                    <option value="male" {% if request.form.sex == 'male' %}selected{% endif %}>Masculino</option>
+                    <option value="female" {% if request.form.sex == 'female' %}selected{% endif %}>Femenino</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Nivel de Actividad:</label>
+                <select name="activity_level" required>
+                    <option value="sedentary" {% if request.form.activity_level == 'sedentary' %}selected{% endif %}>Sedentario</option>
+                    <option value="light" {% if request.form.activity_level == 'light' %}selected{% endif %}>Ligero</option>
+                    <option value="moderate" {% if request.form.activity_level == 'moderate' %}selected{% endif %}>Moderado</option>
+                    <option value="high" {% if request.form.activity_level == 'high' %}selected{% endif %}>Alto</option>
+                    <option value="very_high" {% if request.form.activity_level == 'very_high' %}selected{% endif %}>Muy Alto</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Objetivo:</label>
+                <select name="goal" required>
+                    <option value="deficit" {% if request.form.goal == 'deficit' %}selected{% endif %}>Pérdida de Peso</option>
+                    <option value="maintenance" {% if request.form.goal == 'maintenance' %}selected{% endif %}>Mantenimiento</option>
+                    <option value="bulk" {% if request.form.goal == 'bulk' %}selected{% endif %}>Ganancia Muscular</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Calorías Actuales (opcional):</label>
+                <input type="number" name="current_calories" value="{{ request.form.current_calories or 0 }}" min="0" max="5000">
+            </div>
+            <div class="form-group">
+                <label>Calorías Entrenamiento (opcional):</label>
+                <input type="number" name="training_calories" value="{{ request.form.training_calories or 0 }}" min="0" max="1000">
+            </div>
+        </div>
+
+        <!-- SECCIÓN: ANÁLISIS CORPORAL AVANZADO (OPCIONAL) -->
+        <div class="form-section" style="background-color: #f9f9f9; padding: 15px; margin-top: 20px; border-radius: 8px;">
+            <h3 style="margin-top: 0;">
+                <input type="checkbox" id="toggle_body_composition" />
+                <label for="toggle_body_composition" style="display: inline; margin-left: 8px;">
+                    Análisis Corporal Avanzado (Opcional)
+                </label>
+            </h3>
+            <p class="section-hint" style="font-size: 0.9em; color: #666; margin: 10px 0;">
+                Ingresa tu % de grasa corporal y medidas de circunferencias para análisis de composición más preciso 
+                y cálculo de ecuación Cunningham (más exacta para atletas).
+            </p>
+            
+            <div id="body_composition_fields" style="display:none;">
+                
+                <!-- % GRASA CORPORAL -->
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="body_fat_percentage" style="font-weight: bold;">
+                        Porcentaje de Grasa Corporal (%)
+                        <span style="color: #999;"> - Requerido para activar esta sección</span>
+                    </label>
+                    <input 
+                        type="number"
+                        id="body_fat_percentage"
+                        name="body_fat_percentage"
+                        placeholder="Ej: 20"
+                        min="5"
+                        max="60"
+                        step="0.1"
+                        {{ 'required' if request.form.body_fat_percentage else '' }}
+                    />
+                    <small style="color: #999; display: block; margin-top: 5px;">
+                        Rango: 5-60%. Usa método Jackson-Pollock si posible (más preciso que Boer).
+                    </small>
+                </div>
+                
+                <!-- CIRCUNFERENCIAS (5 campos) -->
+                <fieldset style="border: 1px solid #ddd; padding: 15px; margin: 15px 0; border-radius: 5px;">
+                    <legend style="font-weight: bold; padding: 0 10px;">Circunferencias (cm) - Todas Opcionales</legend>
+                    <p class="section-hint" style="font-size: 0.9em; color: #666; margin: 10px 0;">
+                        Si proporcionas todas las circunferencias, podremos calcular tu Índice Cintura-Cadera 
+                        (predictor de riesgo cardiovascular) más precisamente.
+                    </p>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="circumference_biceps">Brazos (relajado, punto medio)</label>
+                            <input 
+                                type="number"
+                                id="circumference_biceps"
+                                name="circumference_biceps"
+                                placeholder="Ej: 30"
+                                min="15"
+                                max="50"
+                                step="0.5"
+                            />
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="circumference_chest">Pecho (altura de pezones)</label>
+                            <input 
+                                type="number"
+                                id="circumference_chest"
+                                name="circumference_chest"
+                                placeholder="Ej: 95"
+                                min="70"
+                                max="150"
+                                step="0.5"
+                            />
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="circumference_waist">
+                                Cintura (punto medio costillas-cadera)
+                            </label>
+                            <input 
+                                type="number"
+                                id="circumference_waist"
+                                name="circumference_waist"
+                                placeholder="Ej: 85"
+                                min="50"
+                                max="150"
+                                step="0.5"
+                            />
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="circumference_hip">Caderas (máxima prominencia glútea)</label>
+                            <input 
+                                type="number"
+                                id="circumference_hip"
+                                name="circumference_hip"
+                                placeholder="Ej: 95"
+                                min="60"
+                                max="150"
+                                step="0.5"
+                            />
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="circumference_thigh">Muslo (punto medio)</label>
+                            <input 
+                                type="number"
+                                id="circumference_thigh"
+                                name="circumference_thigh"
+                                placeholder="Ej: 55"
+                                min="30"
+                                max="80"
+                                step="0.5"
+                            />
+                        </div>
+                    </div>
+                </fieldset>
+            </div>
+        </div>
+
+        <!-- JAVASCRIPT para toggle body composition section -->
+        <script>
+            document.getElementById('toggle_body_composition').addEventListener('change', function() {
+                document.getElementById('body_composition_fields').style.display = 
+                    this.checked ? 'block' : 'none';
+            });
+        </script>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <button type="submit" name="action" value="analyze">
+                Analizar Plan Nutricional
+            </button>
+        </div>
+    </form>
+
+    {% if analysis %}
+    <div class="results">
+        <!-- TÍTULO DE RESULTADOS -->
+        <div style="text-align: center; margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #f5f3ff 0%, #fff9e6 100%); border-radius: 12px; border-top: 3px solid #9c27b0;">
+            <h2 style="color: #6c5ce7; margin: 0; font-size: 2em;">✓ Análisis Completado</h2>
+            <p style="color: #666; margin-top: 8px; font-size: 1.05em;">Tu plan nutricional personalizado está listo</p>
+        </div>
+        
+        <!-- COMPOSICIÓN CORPORAL - PRIMERO (si existe) -->
+        {% if analysis.body_composition %}
+        <div class="result-card body-composition-card">
+            <div class="section-header">
+                <h2>📊 Análisis de Composición Corporal</h2>
+                <span class="quality-badge" title="Calidad de los datos">{{ analysis.body_composition.measurement_quality | upper }}</span>
+            </div>
+            
+            <!-- MÉTRICAS PRINCIPALES EN GRID -->
+            <div class="metrics-grid">
+                <!-- Masa Grasa -->
+                <div class="metric-card metric-fat">
+                    <div class="metric-icon">🔴</div>
+                    <div class="metric-title">Masa Grasa</div>
+                    <div class="metric-main">{{ "%.1f"|format(analysis.body_composition.fat_mass) }}<span class="metric-unit">kg</span></div>
+                    <div class="metric-sub">{{ "%.1f"|format(analysis.body_composition.body_fat_percentage) }}%</div>
+                    <div class="metric-category">{{ analysis.body_composition.body_fat_category }}</div>
+                </div>
+                
+                <!-- Masa Magra -->
+                <div class="metric-card metric-lean">
+                    <div class="metric-icon">💪</div>
+                    <div class="metric-title">Masa Magra</div>
+                    <div class="metric-main">{{ "%.1f"|format(analysis.body_composition.lean_body_mass) }}<span class="metric-unit">kg</span></div>
+                    <div class="metric-sub">Base para proteína</div>
+                    <div class="metric-category">{{ "%.0f"|format(analysis.body_composition.lean_body_mass * 1.6) }}-{{ "%.0f"|format(analysis.body_composition.lean_body_mass * 2.2) }}g proteína/día</div>
+                </div>
+                
+                <!-- FFMI -->
+                <div class="metric-card metric-ffmi">
+                    <div class="metric-icon">🏋️</div>
+                    <div class="metric-title">Índice de Masa Libre (FFMI)</div>
+                    <div class="metric-main">{{ "%.1f"|format(analysis.body_composition.ffmi) }}<span class="metric-unit">/m²</span></div>
+                    <div class="metric-sub">{% if analysis.body_composition.ffmi < 18 %}Bajo{% elif analysis.body_composition.ffmi < 20 %}Normal{% elif analysis.body_composition.ffmi < 22 %}Atlético{% else %}Muy Alto{% endif %}</div>
+                    <div class="metric-category">{{ analysis.body_composition.ffmi_category }}</div>
+                </div>
+                
+                <!-- WHR si existe -->
+                {% if analysis.body_composition.waist_hip_ratio %}
+                <div class="metric-card metric-whr {% if 'elevado' in analysis.body_composition.whr_risk_level.lower() %}metric-risk{% elif 'moderado' in analysis.body_composition.whr_risk_level.lower() %}metric-warning{% else %}metric-safe{% endif %}">
+                    <div class="metric-icon">📏</div>
+                    <div class="metric-title">Índice Cintura-Cadera</div>
+                    <div class="metric-main">{{ "%.2f"|format(analysis.body_composition.waist_hip_ratio) }}</div>
+                    <div class="metric-sub">Riesgo Cardiovascular</div>
+                    <div class="metric-category">{{ analysis.body_composition.whr_risk_level }}</div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- EXPLICACIONES DETALLADAS -->
+            <div class="explanations-section">
+                <h3>📚 ¿Qué significan estos datos?</h3>
+                
+                <div class="explanation-item">
+                    <h4>🔴 Masa Grasa ({{ "%.1f"|format(analysis.body_composition.body_fat_percentage) }}%)</h4>
+                    <p class="explanation-text">
+                        Tu masa grasa es el <strong>{{ "%.1f"|format(analysis.body_composition.fat_mass) }}kg de tejido adiposo</strong> en tu cuerpo. 
+                        Esto representa el <strong>{{ "%.1f"|format(analysis.body_composition.body_fat_percentage) }}%</strong> de tu peso corporal total.
+                    </p>
+                    <div class="explanation-details">
+                        <strong>Categoría: {{ analysis.body_composition.body_fat_category }}</strong><br>
+                        {% if analysis.body_composition.body_fat_percentage <= 12 %}
+                        <span class="status-good">✓ Excelente nivel de definición muscular. Ideal para competiciones o máxima visibilidad de musculatura.</span>
+                        {% elif analysis.body_composition.body_fat_percentage <= 18 %}
+                        <span class="status-good">✓ Muy buena composición. Equilibrio entre definición y sostenibilidad a largo plazo.</span>
+                        {% elif analysis.body_composition.body_fat_percentage <= 25 %}
+                        <span class="status-normal">⚬ Composición normal. Adecuado para actividad física regular con buen rendimiento.</span>
+                        {% elif analysis.body_composition.body_fat_percentage <= 32 %}
+                        <span class="status-warning">△ Composición por encima del promedio. Considera aumentar actividad física para mejora. Riesgo cardiovascular moderado.</span>
+                        {% else %}
+                        <span class="status-risk">✗ Composición con riesgo elevado. Se recomienda cambios en actividad y alimentación para mejorar salud cardiovascular.</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="explanation-item">
+                    <h4>💪 Masa Magra ({{ "%.1f"|format(analysis.body_composition.lean_body_mass) }}kg)</h4>
+                    <p class="explanation-text">
+                        Tu masa magra incluye <strong>músculos, huesos, órganos y agua corporal</strong>. Es lo que queda cuando restas la grasa de tu peso total.
+                        Este valor es <strong>crítico para determinar tus necesidades de proteína</strong>.
+                    </p>
+                    <div class="explanation-details">
+                        <strong>Requerimiento de Proteína:</strong><br>
+                        Se recomienda <strong>1.6 a 2.2g de proteína por kg de masa magra</strong><br>
+                        <strong>Tu rango: {{ "%.0f"|format(analysis.body_composition.lean_body_mass * 1.6) }} - {{ "%.0f"|format(analysis.body_composition.lean_body_mass * 2.2) }}g/día</strong><br>
+                        <span style="font-size: 0.9em; color: #666;">
+                            Esto es más preciso que usar peso total, especialmente para personas con alta ó baja grasa corporal.
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="explanation-item">
+                    <h4>🏋️ Índice de Masa Libre (FFMI: {{ "%.1f"|format(analysis.body_composition.ffmi) }}/m²)</h4>
+                    <p class="explanation-text">
+                        El <strong>Fat-Free Mass Index</strong> es similar al IMC, pero <strong>usa solo la masa magra</strong>.
+                        Es un mejor indicador de musculatura y composición que el IMC tradicional.
+                    </p>
+                    <div class="explanation-details">
+                        <strong>Categoría: {{ analysis.body_composition.ffmi_category }}</strong><br>
+                        {% if analysis.body_composition.ffmi < 18 %}
+                        <span class="status-warning">△ FFMI bajo - Masa muscular reducida para tu altura. Considera entrenamiento de fuerza.</span>
+                        {% elif analysis.body_composition.ffmi < 20 %}
+                        <span class="status-normal">⚬ FFMI normal - Musculatura promedio adecuada para la población general.</span>
+                        {% elif analysis.body_composition.ffmi < 22 %}
+                        <span class="status-good">✓ FFMI atlético - Buena cantidad de masa muscular. Indica entrenamiento consistente.</span>
+                        {% elif analysis.body_composition.ffmi < 24 %}
+                        <span class="status-good">✓ FFMI muy atlético - Excelente desarrollo muscular. Posible uso de entrenamiento avanzado.</span>
+                        {% else %}
+                        <span class="status-risk">✗ FFMI extremadamente alto - Raro sin intervenciones especiales. Verifica mediciones.</span>
+                        {% endif %}
+                        <br><br>
+                        <strong>Interpretación:</strong><br>
+                        <span style="font-size: 0.9em; color: #666;">
+                            FFMI &lt; 18: Poco musculado | 18-20: Normal | 20-22: Atlético | &gt;22: Muy musculado
+                        </span>
+                    </div>
+                </div>
+                
+                {% if analysis.body_composition.waist_hip_ratio %}
+                <div class="explanation-item">
+                    <h4>📏 Índice Cintura-Cadera (WHR: {{ "%.2f"|format(analysis.body_composition.waist_hip_ratio) }})</h4>
+                    <p class="explanation-text">
+                        El <strong>Waist-to-Hip Ratio</strong> mide la distribución de grasa y es un <strong>predictor importante de riesgo cardiovascular</strong>.
+                        Un valor alto indica más grasa acumulada en la zona abdominal.
+                    </p>
+                    <div class="explanation-details">
+                        <strong>Riesgo: {{ analysis.body_composition.whr_risk_level }}</strong><br>
+                        {% if "bajo" in analysis.body_composition.whr_risk_level.lower() %}
+                        <span class="status-good">✓ Excelente - Distribución de grasa saludable. Bajo riesgo cardiovascular.</span>
+                        {% elif "moderado" in analysis.body_composition.whr_risk_level.lower() %}
+                        <span class="status-warning">△ Moderado - Monitor tu peso abdominal. Actividad cardiovascular regular recomendada.</span>
+                        {% else %}
+                        <span class="status-risk">✗ Elevado - Acumulación de grasa abdominal patogénica. Riesgo cardiovascular significativo. Cambios urgentes recomendados.</span>
+                        {% endif %}
+                        <br><br>
+                        <strong>Referencia:</strong><br>
+                        <span style="font-size: 0.9em; color: #666;">
+                            Hombres: &lt;0.90 = Bajo | 0.90-0.99 = Moderado | &gt;0.99 = Elevado<br>
+                            Mujeres: &lt;0.80 = Bajo | 0.80-0.84 = Moderado | &gt;0.84 = Elevado
+                        </span>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- RESUMEN Y RECOMENDACIONES -->
+            <div class="summary-section">
+                <h3>🎯 Resumen y Recomendaciones</h3>
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <strong>👤 Perfil General:</strong>
+                        <p>{{ analysis.body_composition.body_fat_category }} - {{ analysis.body_composition.ffmi_category }}</p>
+                    </div>
+                    <div class="summary-item">
+                        <strong>💪 Recomendación de Proteína:</strong>
+                        <p>{{ "%.0f"|format(analysis.body_composition.lean_body_mass * 1.6) }}-{{ "%.0f"|format(analysis.body_composition.lean_body_mass * 2.2) }}g/día</p>
+                    </div>
+                    <div class="summary-item">
+                        <strong>❤️ Salud Cardiovascular:</strong>
+                        <p>{% if analysis.body_composition.waist_hip_ratio %}{{ analysis.body_composition.whr_risk_level }}{% else %}Evaluar con medidas de cintura-cadera{% endif %}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- PERFIL DEL USUARIO -->
+        <div class="result-card">
+            <h3>📋 Perfil del Usuario</h3>
+            <div class="metric">
+                <span class="metric-label">Peso:</span>
+                <span class="metric-value">{{ analysis.user_profile.weight }} kg</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Altura:</span>
+                <span class="metric-value">{{ analysis.user_profile.height }} cm</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Edad:</span>
+                <span class="metric-value">{{ analysis.user_profile.age }} años</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Sexo:</span>
+                <span class="metric-value">{{ 'Masculino' if analysis.user_profile.sex == 'male' else 'Femenino' }}</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Actividad:</span>
+                <span class="metric-value">{{ analysis.user_profile.activity_level.title() }}</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Objetivo:</span>
+                <span class="metric-value">{{ analysis.user_profile.goal.title() }}</span>
+            </div>
+        </div>
+
+        <!-- ANÁLISIS METABÓLICO -->
+        <div class="result-card">
+            <h3>🔥 Análisis Metabólico</h3>
+            <div class="metric">
+                <span class="metric-label">Tasa Metabólica Basal (BMR):</span>
+                <span class="metric-value">{{ "%.0f"|format(analysis.metabolic.bmr) }} kcal/día</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Gasto Energético Total (TDEE):</span>
+                <span class="metric-value">{{ "%.0f"|format(analysis.metabolic.tdee) }} kcal/día</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Factor de Actividad:</span>
+                <span class="metric-value">{{ "%.2f"|format(analysis.metabolic.activity_factor) }}</span>
+            </div>
+        </div>
+
+        <!-- ANÁLISIS NUTRICIONAL -->
+        <div class="result-card">
+            <h3>🥗 Análisis Nutricional</h3>
+            {% if request.form.current_calories and request.form.current_calories != "0" %}
+            <div class="metric">
+                <span class="metric-label">Balance Energético:</span>
+                <span class="metric-value {{ 'status-' + analysis.nutritional.status }}">
+                    {{ "%+.0f"|format(analysis.nutritional.energy_balance) }} kcal
+                </span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Estado Metabólico:</span>
+                <span class="metric-value {{ 'status-' + analysis.nutritional.status }}">
+                    {{ analysis.nutritional.status.title() }}
+                </span>
+            </div>
+            {% else %}
+            <div class="info-note" style="margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-radius: 8px; border-left: 4px solid #6c757d; font-size: 0.9rem; color: #6c757d;">
+                <strong>ℹ️ Nota:</strong> El balance energético y estado metabólico requieren datos de tu consumo calórico actual para poder calcularse. 
+                Si quieres ver estos valores, introduce tus calorías diarias actuales en el formulario.
+            </div>
+            {% endif %}
+            <div class="metric">
+                <span class="metric-label">Calorías Objetivo:</span>
+                <span class="metric-value">{{ "%.0f"|format(analysis.nutritional.target_calories) }} kcal/día</span>
+            </div>
+            
+            <h4 style="margin-top: 20px; margin-bottom: 10px;">Distribución de Macronutrientes:</h4>
+            <div class="macros">
+                <div class="macro-item">
+                    <div>Proteína</div>
+                    <div class="macro-value">{{ "%.1f"|format(analysis.nutritional.macro_split.protein) }}g</div>
+                    <div>({{ "%.1f"|format(analysis.nutritional.macro_percentages.protein) }}%)</div>
+                </div>
+                <div class="macro-item">
+                    <div>Grasas</div>
+                    <div class="macro-value">{{ "%.1f"|format(analysis.nutritional.macro_split.fat) }}g</div>
+                    <div>({{ "%.1f"|format(analysis.nutritional.macro_percentages.fat) }}%)</div>
+                </div>
+                <div class="macro-item">
+                    <div>Carbohidratos</div>
+                    <div class="macro-value">{{ "%.1f"|format(analysis.nutritional.macro_split.carbs) }}g</div>
+                    <div>({{ "%.1f"|format(analysis.nutritional.macro_percentages.carbs) }}%)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RECOMENDACIONES FINALES Y CIENTÍFICAS -->
+        <div class="result-card">
+            <h3>🎯 Recomendaciones Personalizadas</h3>
+            
+            <div class="metric">
+                <span class="metric-label">Nivel de Confianza:</span>
+                <span class="metric-value">{{ "%.1f"|format(analysis.recommendation.confidence_level * 100) }}%</span>
+            </div>
+            
+            <div class="collapsible-section">
+                <button type="button" class="collapsible-btn" onclick="toggleScientificInfo()">
+                    🔬 Información Científica (opcional)
+                </button>
+                <div id="scientificInfo" class="collapsible-content" style="display: none;">
+                    <div class="metric">
+                        <span class="metric-label">Ecuación Usada:</span>
+                        <span class="metric-value">{{ analysis.recommendation.equation_used }}</span>
+                    </div>
+                    
+                    <div class="metric">
+                        <span class="metric-label">Margen de Error Esperado:</span>
+                        <span class="metric-value">{{ analysis.recommendation.expected_error_range }}</span>
+                    </div>
+                    
+                    <div class="confidence-explanation">
+                        <strong>¿Qué significa el nivel de confianza?</strong><br>
+                        {{ analysis.recommendation.confidence_explanation }}
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 15px;">
+                <p>{{ analysis.recommendation.recommendation | replace('\n', '<br>') | safe }}</p>
+            </div>
+            
+            {% if analysis.recommendation.educational_messages %}
+            <div class="educational-messages" style="margin: 15px 0; padding: 10px; background-color: #fff9e6; border-radius: 5px; border-left: 4px solid #ffc107;">
+                <strong>💡 Información Educativa:</strong>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    {% for message in analysis.recommendation.educational_messages %}
+                    <li>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            
+            <div class="steps">
+                <h4>Pasos Accionables:</h4>
+                <ol>
+                    {% for step in analysis.recommendation.actionable_steps %}
+                    <li>{{ step }}</li>
+                    {% endfor %}
+                </ol>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if image %}
+    <div class="chart-section">
+        <h3>📊 Gráfico Generado</h3>
+        <img src="{{ image }}" alt="Nutrition Chart">
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function toggleScientificInfo() {
+    const content = document.getElementById('scientificInfo');
+    const button = document.querySelector('.collapsible-btn');
+    
+    if (content.style.display === 'none') {
+        content.style.display = 'block';
+        button.innerHTML = '🔬 Ocultar Información Científica';
+    } else {
+        content.style.display = 'none';
+        button.innerHTML = '🔬 Información Científica (opcional)';
+    }
+}
+</script>
+
+</body>
+</html>

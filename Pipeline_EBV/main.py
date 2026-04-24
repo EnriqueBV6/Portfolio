@@ -6,7 +6,7 @@ from google.cloud import bigquery
 # CONFIGURACIÓN DE CREDENCIALES
 # ==========================================================
 # Asegúrate de que el archivo JSON esté en la misma carpeta
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "clave_bq.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(os.path.dirname(__file__), 'clave_bq.json')
 
 # --- CLASE 1: EXTRACCIÓN (API) ---
 class TelcoAPIExtractor:

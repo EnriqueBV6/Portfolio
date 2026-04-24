@@ -1,0 +1,10 @@
+# Credenciales de Google Cloud (Archivo JSON)
+*.json
+
+# Entornos virtuales
+venv/
+.env
+
+# Archivos temporales de Python
+__pycache__/
+*.py[cod]

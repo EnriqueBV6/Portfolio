@@ -13,6 +13,52 @@ from models.calculation_result import CompleteAnalysis
 
 app = Flask(__name__)
 
+
+def generate_training_plan(weight, goal, body_fat_percentage):
+    if goal == "deficit":
+        routine_name = "Fullbody 3 días"
+        routine_focus = "Eficiencia"
+        recommended_exercises = [
+            "Sentadilla Goblet con mancuerna",
+            "Press de pecho con mancuernas",
+            "Remo en máquina",
+            "Peso muerto rumano con mancuernas",
+            "Press militar con mancuernas",
+            "Plancha frontal"
+        ]
+    elif goal == "bulk":
+        routine_name = "Torso/Pierna 4 días"
+        routine_focus = "Volumen"
+        recommended_exercises = [
+            "Sentadilla con barra",
+            "Press de banca",
+            "Dominadas asistidas",
+            "Remo con barra",
+            "Peso muerto convencional",
+            "Press militar con barra"
+        ]
+    else:
+        routine_name = "Fullbody 3 días"
+        routine_focus = "Eficiencia"
+        recommended_exercises = [
+            "Sentadilla Goblet con mancuerna",
+            "Press de pecho con mancuernas",
+            "Remo en máquina",
+            "Peso muerto rumano con mancuernas",
+            "Press militar con mancuernas",
+            "Plancha frontal"
+        ]
+
+    return {
+        "routine_name": routine_name,
+        "routine_focus": routine_focus,
+        "recommended_exercises": recommended_exercises,
+        "goal": goal,
+        "weight": weight,
+        "body_fat_percentage": body_fat_percentage
+    }
+
+
 # Configure encoding
 app.config['JSON_AS_ASCII'] = False
 
@@ -20,6 +66,9 @@ app.config['JSON_AS_ASCII'] = False
 def index():
     image = None
     analysis = None
+    training_plan = None
+    peso = None
+    objetivo = None
     
     if request.method == "POST":
         action = request.form.get("action")
@@ -112,6 +161,15 @@ def index():
                 
                 # NUEVO: Agregar body composition result al analysis
                 analysis.body_composition = body_composition_result
+
+                # NUEVO: Generar plan de entrenamiento sin pedir datos nuevos
+                training_plan = generate_training_plan(
+                    weight=weight,
+                    goal=goal,
+                    body_fat_percentage=body_fat_percentage
+                )
+                peso = weight
+                objetivo = goal
                 
             except (ValueError, TypeError) as e:
                 # Handle form validation errors
@@ -127,7 +185,14 @@ def index():
             elif action == "protein":
                 image = plot_protein(df)
     
-    return render_template("index.html", image=image, analysis=analysis)
+    return render_template(
+        "index.html",
+        image=image,
+        analysis=analysis,
+        training_plan=training_plan,
+        peso=peso,
+        objetivo=objetivo
+    )
 
 
 if __name__ == "__main__":

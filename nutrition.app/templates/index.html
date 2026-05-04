@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nutrition & Training Planner</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-ENjdO4Dr2bkBIFxQpeoA6PzK0E8b1e2bMZ9HcBlH9C7u9jE2F0E2K3z8A4c9I65e" crossorigin="anonymous">
 </head>
 <body>
 
@@ -405,6 +406,12 @@
             </div>
         </div>
 
+        <div class="text-center mb-4">
+            <button type="button" class="btn btn-success mt-3" data-toggle="modal" data-target="#modalEntrenamiento" id="open-training-modal">
+                Ver Mi Guía de Entrenamiento
+            </button>
+        </div>
+
         <!-- ANÁLISIS METABÓLICO -->
         <div class="result-card">
             <h3>🔥 Análisis Metabólico</h3>
@@ -548,6 +555,186 @@ function toggleScientificInfo() {
         button.innerHTML = '🔬 Información Científica (opcional)';
     }
 }
+</script>
+
+{% if analysis and training_plan %}
+<div class="modal fade" id="modalEntrenamiento" tabindex="-1" role="dialog" aria-hidden="true" style="display:none;">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    Plan Estratégico para
+                    {% if objetivo == 'deficit' %}
+                        Pérdida de peso
+                    {% elif objetivo == 'bulk' %}
+                        Ganancia muscular
+                    {% else %}
+                        tu objetivo
+                    {% endif %}
+                </h5>
+                <button type="button" class="btn-close" aria-label="Cerrar" onclick="closeTrainingModal()"></button>
+            </div>
+            <div class="modal-body">
+                <p>
+                    Rutina propuesta:
+                    <strong>{{ training_plan.routine_name }}</strong>
+                    — enfoque {{ training_plan.routine_focus }}.
+                </p>
+                <div class="mb-3">
+                    <strong>Ejercicios recomendados:</strong>
+                    <ul>
+                        {% for exercise in training_plan.recommended_exercises %}
+                        <li>{{ exercise }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <div class="mb-3">
+                    <strong>Nivel de entrenamiento:</strong>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="trainingLevel" id="levelBeginner" value="beginner" checked>
+                        <label class="form-check-label" for="levelBeginner">Principiante</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="trainingLevel" id="levelAdvanced" value="advanced">
+                        <label class="form-check-label" for="levelAdvanced">Intermedio/Avanzado</label>
+                    </div>
+                </div>
+
+                <div id="beginnerContent">
+                    <div class="alert alert-warning">
+                        <strong>Seguridad para novatos:</strong> Prioriza técnica y usa cargas controladas.
+                        RPE 7-8 significa elegir un peso con el que sientas que podrías haber hecho 2 o 3 repeticiones más.
+                    </div>
+
+                    <table class="table table-sm table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Ejercicio</th>
+                                <th>Variante segura</th>
+                                <th>Intensidad (RPE)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Sentadilla</td>
+                                <td>Sentadilla Goblet con mancuerna / Prensa de piernas</td>
+                                <td>7-8</td>
+                            </tr>
+                            <tr>
+                                <td>Press de pecho</td>
+                                <td>Press de pecho con mancuernas</td>
+                                <td>7-8</td>
+                            </tr>
+                            <tr>
+                                <td>Remo</td>
+                                <td>Remo en máquina</td>
+                                <td>7-8</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="advancedContent" class="d-none">
+                    <h6>Estimaciones 1RM basadas en tu peso</h6>
+                    <ul>
+                        <li>Sentadilla: <strong>{{ (peso * 1.3) | round(1) }} kg</strong></li>
+                        <li>Banca: <strong>{{ (peso * 0.9) | round(1) }} kg</strong></li>
+                        <li>Peso muerto: <strong>{{ (peso * 1.6) | round(1) }} kg</strong></li>
+                    </ul>
+                </div>
+
+                <div class="mt-4">
+                    <label for="rmReps" class="form-label"><strong>Calculadora de RM</strong></label>
+                    <div class="input-group mb-2">
+                        <input type="number" class="form-control" id="rmReps" min="1" max="12" value="5">
+                        <span class="input-group-text">reps</span>
+                    </div>
+                    <div id="rmCalculatorResult" class="p-3 bg-light rounded">
+                        Estimación de carga para 5 repeticiones: <strong></strong>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeTrainingModal()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+function toggleScientificInfo() {
+    const content = document.getElementById('scientificInfo');
+    const button = document.querySelector('.collapsible-btn');
+    
+    if (content.style.display === 'none') {
+        content.style.display = 'block';
+        button.innerHTML = '🔬 Ocultar Información Científica';
+    } else {
+        content.style.display = 'none';
+        button.innerHTML = '🔬 Información Científica (opcional)';
+    }
+}
+
+const modal = document.getElementById('modalEntrenamiento');
+const openModalBtn = document.getElementById('open-training-modal');
+const beginnerContent = document.getElementById('beginnerContent');
+const advancedContent = document.getElementById('advancedContent');
+const rmRepsInput = document.getElementById('rmReps');
+const rmCalculatorResult = document.getElementById('rmCalculatorResult');
+const baseWeight = {{ peso or 0 }};
+
+function openTrainingModal() {
+    if (!modal) return;
+    modal.style.display = 'block';
+    modal.classList.add('show');
+    document.body.classList.add('modal-open');
+    updateTrainingLevel();
+    updateRMDisplay();
+}
+
+function closeTrainingModal() {
+    if (!modal) return;
+    modal.style.display = 'none';
+    modal.classList.remove('show');
+    document.body.classList.remove('modal-open');
+}
+
+function updateTrainingLevel() {
+    const level = document.querySelector('input[name="trainingLevel"]:checked');
+    if (!level) return;
+    beginnerContent.classList.toggle('d-none', level.value !== 'beginner');
+    advancedContent.classList.toggle('d-none', level.value !== 'advanced');
+}
+
+function updateRMDisplay() {
+    if (!rmCalculatorResult || !rmRepsInput) return;
+    const reps = parseInt(rmRepsInput.value, 10) || 5;
+    const estimatedLoad = ((baseWeight * 1.3) / (1 + reps / 30)).toFixed(1);
+    rmCalculatorResult.innerHTML = `Estimación de carga para ${reps} repeticiones: <strong>${estimatedLoad} kg</strong>`;
+}
+
+if (openModalBtn) {
+    openModalBtn.addEventListener('click', function(event) {
+        event.preventDefault();
+        openTrainingModal();
+    });
+}
+
+document.querySelectorAll('input[name="trainingLevel"]').forEach(function(el) {
+    el.addEventListener('change', updateTrainingLevel);
+});
+
+if (rmRepsInput) {
+    rmRepsInput.addEventListener('input', updateRMDisplay);
+}
+
+window.addEventListener('click', function(event) {
+    if (event.target === modal) {
+        closeTrainingModal();
+    }
+});
 </script>
 
 </body>

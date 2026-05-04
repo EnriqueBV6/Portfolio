@@ -406,13 +406,27 @@
             </div>
         </div>
 
-        <div class="text-center mb-4">
-            <button type="button" class="btn btn-success mt-3" data-toggle="modal" data-target="#modalEntrenamiento" id="open-training-modal">
-                Ver Mi Guía de Entrenamiento
-            </button>
-        </div>
-
         <!-- ANÁLISIS METABÓLICO -->
+        <div class="result-card">
+            <h3>🔥 Análisis Metabólico</h3>
+            <div class="metric">
+                <span class="metric-label">Tasa Metabólica Basal (BMR):</span>
+                <span class="metric-value">{{ "%.0f"|format(analysis.metabolic.bmr) }} kcal/día</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Gasto Energético Total (TDEE):</span>
+                <span class="metric-value">{{ "%.0f"|format(analysis.metabolic.tdee) }} kcal/día</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Factor de Actividad:</span>
+                <span class="metric-value">{{ "%.2f"|format(analysis.metabolic.activity_factor) }}</span>
+            </div>
+            <div class="mt-3">
+                <button type="button" class="btn btn-success btn-block w-100" id="open-training-modal">
+                    Ver Plan de Entrenamiento
+                </button>
+            </div>
+        </div>
         <div class="result-card">
             <h3>🔥 Análisis Metabólico</h3>
             <div class="metric">
@@ -558,7 +572,7 @@ function toggleScientificInfo() {
 </script>
 
 {% if analysis and training_plan %}
-<div class="modal fade" id="modalEntrenamiento" tabindex="-1" role="dialog" aria-hidden="true" style="display:none;">
+<div class="modal fade" id="modalEntrenamiento" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -574,84 +588,96 @@ function toggleScientificInfo() {
                 </h5>
                 <button type="button" class="btn-close" aria-label="Cerrar" onclick="closeTrainingModal()"></button>
             </div>
-            <div class="modal-body">
-                <p>
-                    Rutina propuesta:
-                    <strong>{{ training_plan.routine_name }}</strong>
-                    — enfoque {{ training_plan.routine_focus }}.
-                </p>
-                <div class="mb-3">
-                    <strong>Ejercicios recomendados:</strong>
-                    <ul>
-                        {% for exercise in training_plan.recommended_exercises %}
-                        <li>{{ exercise }}</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-
-                <div class="mb-3">
-                    <strong>Nivel de entrenamiento:</strong>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="trainingLevel" id="levelBeginner" value="beginner" checked>
-                        <label class="form-check-label" for="levelBeginner">Principiante</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="trainingLevel" id="levelAdvanced" value="advanced">
-                        <label class="form-check-label" for="levelAdvanced">Intermedio/Avanzado</label>
+            <div class="modal-body text-start">
+                <div class="card mb-3 border-0 shadow-sm">
+                    <div class="card-body">
+                        <h6 class="card-title">Rutina Sugerida</h6>
+                        <p class="card-text mb-2">
+                            <strong>{{ training_plan.routine_name }}</strong> — enfoque {{ training_plan.routine_focus }}.
+                        </p>
+                        <ul class="mb-0">
+                            {% for exercise in training_plan.recommended_exercises %}
+                            <li>{{ exercise }}</li>
+                            {% endfor %}
+                        </ul>
                     </div>
                 </div>
 
-                <div id="beginnerContent">
-                    <div class="alert alert-warning">
-                        <strong>Seguridad para novatos:</strong> Prioriza técnica y usa cargas controladas.
-                        RPE 7-8 significa elegir un peso con el que sientas que podrías haber hecho 2 o 3 repeticiones más.
+                <ul class="nav nav-tabs mb-3" id="trainingTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="beginner-tab" data-bs-toggle="tab" type="button" role="tab" aria-controls="beginner" aria-selected="true">Principiante</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="advanced-tab" data-bs-toggle="tab" type="button" role="tab" aria-controls="advanced" aria-selected="false">Intermedio/Avanzado</button>
+                    </li>
+                </ul>
+                <div class="tab-content" id="trainingTabContent">
+                    <div class="tab-pane fade show active" id="beginner" role="tabpanel" aria-labelledby="beginner-tab">
+                        <div class="alert alert-warning" role="alert">
+                            <strong>Seguridad para novatos:</strong> Prioriza técnica y usa cargas controladas. RPE 7-8 significa elegir un peso con el que sientas que podrías haber hecho 2 o 3 repeticiones más.
+                        </div>
+                        <div class="card border-0 shadow-sm mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title">Tabla de RPE</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Ejercicio</th>
+                                                <th>Variante segura</th>
+                                                <th>Intensidad (RPE)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>Sentadilla</td>
+                                                <td>Sentadilla Goblet con mancuerna / Prensa de piernas</td>
+                                                <td>7-8</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Press de pecho</td>
+                                                <td>Press de pecho con mancuernas</td>
+                                                <td>7-8</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Remo</td>
+                                                <td>Remo en máquina</td>
+                                                <td>7-8</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-
-                    <table class="table table-sm table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Ejercicio</th>
-                                <th>Variante segura</th>
-                                <th>Intensidad (RPE)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Sentadilla</td>
-                                <td>Sentadilla Goblet con mancuerna / Prensa de piernas</td>
-                                <td>7-8</td>
-                            </tr>
-                            <tr>
-                                <td>Press de pecho</td>
-                                <td>Press de pecho con mancuernas</td>
-                                <td>7-8</td>
-                            </tr>
-                            <tr>
-                                <td>Remo</td>
-                                <td>Remo en máquina</td>
-                                <td>7-8</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <div class="tab-pane fade" id="advanced" role="tabpanel" aria-labelledby="advanced-tab">
+                        <div class="card border-0 shadow-sm mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title">Estimaciones 1RM</h6>
+                                <p class="mb-2">Calculado a partir de tu peso actual:</p>
+                                <ul class="mb-0">
+                                    <li>Sentadilla: <strong>{{ (peso * 1.3) | round(1) }} kg</strong></li>
+                                    <li>Banca: <strong>{{ (peso * 0.9) | round(1) }} kg</strong></li>
+                                    <li>Peso muerto: <strong>{{ (peso * 1.6) | round(1) }} kg</strong></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <div id="advancedContent" class="d-none">
-                    <h6>Estimaciones 1RM basadas en tu peso</h6>
-                    <ul>
-                        <li>Sentadilla: <strong>{{ (peso * 1.3) | round(1) }} kg</strong></li>
-                        <li>Banca: <strong>{{ (peso * 0.9) | round(1) }} kg</strong></li>
-                        <li>Peso muerto: <strong>{{ (peso * 1.6) | round(1) }} kg</strong></li>
-                    </ul>
-                </div>
-
-                <div class="mt-4">
-                    <label for="rmReps" class="form-label"><strong>Calculadora de RM</strong></label>
-                    <div class="input-group mb-2">
-                        <input type="number" class="form-control" id="rmReps" min="1" max="12" value="5">
-                        <span class="input-group-text">reps</span>
-                    </div>
-                    <div id="rmCalculatorResult" class="p-3 bg-light rounded">
-                        Estimación de carga para 5 repeticiones: <strong></strong>
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h6 class="card-title">Calculadora de RM</h6>
+                        <div class="row g-2 align-items-center">
+                            <div class="col-12 col-sm-3">
+                                <label for="rmReps" class="form-label mb-1">Repeticiones</label>
+                                <input type="number" class="form-control" id="rmReps" min="1" max="12" value="5">
+                            </div>
+                            <div class="col">
+                                <p class="mb-1">Estimación de carga:</p>
+                                <div id="rmCalculatorResult">Estimación de carga para 5 repeticiones: <strong></strong></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -679,8 +705,10 @@ function toggleScientificInfo() {
 
 const modal = document.getElementById('modalEntrenamiento');
 const openModalBtn = document.getElementById('open-training-modal');
-const beginnerContent = document.getElementById('beginnerContent');
-const advancedContent = document.getElementById('advancedContent');
+const beginnerTabButton = document.getElementById('beginner-tab');
+const advancedTabButton = document.getElementById('advanced-tab');
+const beginnerPane = document.getElementById('beginner');
+const advancedPane = document.getElementById('advanced');
 const rmRepsInput = document.getElementById('rmReps');
 const rmCalculatorResult = document.getElementById('rmCalculatorResult');
 const baseWeight = {{ peso or 0 }};
@@ -690,7 +718,7 @@ function openTrainingModal() {
     modal.style.display = 'block';
     modal.classList.add('show');
     document.body.classList.add('modal-open');
-    updateTrainingLevel();
+    switchTrainingTab('beginner');
     updateRMDisplay();
 }
 
@@ -701,11 +729,19 @@ function closeTrainingModal() {
     document.body.classList.remove('modal-open');
 }
 
-function updateTrainingLevel() {
-    const level = document.querySelector('input[name="trainingLevel"]:checked');
-    if (!level) return;
-    beginnerContent.classList.toggle('d-none', level.value !== 'beginner');
-    advancedContent.classList.toggle('d-none', level.value !== 'advanced');
+function switchTrainingTab(tabId) {
+    if (!beginnerTabButton || !advancedTabButton || !beginnerPane || !advancedPane) return;
+    if (tabId === 'beginner') {
+        beginnerTabButton.classList.add('active');
+        advancedTabButton.classList.remove('active');
+        beginnerPane.classList.add('show', 'active');
+        advancedPane.classList.remove('show', 'active');
+    } else {
+        beginnerTabButton.classList.remove('active');
+        advancedTabButton.classList.add('active');
+        beginnerPane.classList.remove('show', 'active');
+        advancedPane.classList.add('show', 'active');
+    }
 }
 
 function updateRMDisplay() {
@@ -722,9 +758,19 @@ if (openModalBtn) {
     });
 }
 
-document.querySelectorAll('input[name="trainingLevel"]').forEach(function(el) {
-    el.addEventListener('change', updateTrainingLevel);
-});
+if (beginnerTabButton) {
+    beginnerTabButton.addEventListener('click', function(event) {
+        event.preventDefault();
+        switchTrainingTab('beginner');
+    });
+}
+
+if (advancedTabButton) {
+    advancedTabButton.addEventListener('click', function(event) {
+        event.preventDefault();
+        switchTrainingTab('advanced');
+    });
+}
 
 if (rmRepsInput) {
     rmRepsInput.addEventListener('input', updateRMDisplay);
